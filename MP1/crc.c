@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,9 +71,26 @@ int connect_to(const char *host, const int port)
 	// so that other functions such as "process_command" can use it
 	// ------------------------------------------------------------
 
-    // below is just dummy code for compilation, remove it.
-	int sockfd = -1;
-	return sockfd;
+	int client_socket = socket(AF_INET, SOCK_STREAM, 0);
+  struct hostent* hp;
+  struct sockaddr_in server;
+  memset(&server, 0, sizeof(server));
+
+  if ((hp = gethostbyname(host)) == NULL) {
+		fprintf(stderr, "Failed to resolve host name\n");
+  } else {
+
+    memcpy((char*)&server.sin_addr.s_addr,
+      hp->h_addr_list[0],
+      hp->h_length);
+  }
+
+  server.sin_family = AF_INET;
+  server.sin_port = port;
+
+	connect(client_socket, (struct sockaddr*)&server, sizeof(server));
+
+	return client_socket;
 }
 
 /*
@@ -105,17 +123,17 @@ struct Reply process_command(const int sockfd, char* command)
 	// - CREATE/DELETE/JOIN and "<name>" are separated by one space.
 	// ------------------------------------------------------------
 
-	char * room_name = strchr(command, ' ');
-	size_t command_length = room_name - command;
-
-	room_name++;
-
-	char * pure_command = (char*) malloc((command_length + 1) * sizeof(char));
-
-	strncpy(pure_command, command, command_length);
-
-	printf("%s \n", pure_command);
-	printf("%s \n", room_name);
+	// char * room_name = strchr(command, ' ');
+	// size_t command_length = room_name - command;
+	//
+	// room_name++;
+	//
+	// char * pure_command = (char*) malloc((command_length + 1) * sizeof(char));
+	//
+	// strncpy(pure_command, command, command_length);
+	//
+	// printf("%s \n", pure_command);
+	// printf("%s \n", room_name);
 
 	// ------------------------------------------------------------
 	// GUIDE 2:
