@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,9 +73,17 @@ int connect_to(const char *host, const int port)
 	// ------------------------------------------------------------
 
 	int client_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (client_socket < 0) {
+		perror("socket failed");
+    exit(EXIT_FAILURE);
+	}
   struct hostent* hp;
   struct sockaddr_in server;
+
   memset(&server, 0, sizeof(server));
+	server.sin_family = AF_INET;
+  server.sin_port = htons(port);
+	server.sin_addr.s_addr = inet_addr(host);
 
   if ((hp = gethostbyname(host)) == NULL) {
 		fprintf(stderr, "Failed to resolve host name\n");
@@ -85,10 +94,15 @@ int connect_to(const char *host, const int port)
       hp->h_length);
   }
 
-  server.sin_family = AF_INET;
-  server.sin_port = port;
 
-	connect(client_socket, (struct sockaddr*)&server, sizeof(server));
+
+	if (connect(client_socket, (struct sockaddr*)&server, sizeof(server)) < 0) {
+		fprintf(stderr, "Failed to connect\n");
+		exit(EXIT_FAILURE);
+	} else {
+		// printf("%s \n", "Connection established");
+	}
+
 
 	return client_socket;
 }
@@ -131,9 +145,6 @@ struct Reply process_command(const int sockfd, char* command)
 	// char * pure_command = (char*) malloc((command_length + 1) * sizeof(char));
 	//
 	// strncpy(pure_command, command, command_length);
-	//
-	// printf("%s \n", pure_command);
-	// printf("%s \n", room_name);
 
 	// ------------------------------------------------------------
 	// GUIDE 2:
@@ -141,6 +152,7 @@ struct Reply process_command(const int sockfd, char* command)
 	// server and receive a result from the server.
 	// ------------------------------------------------------------
 
+	send(sockfd, command, strlen(command), 0);
 
 	// ------------------------------------------------------------
 	// GUIDE 3:
@@ -184,11 +196,20 @@ struct Reply process_command(const int sockfd, char* command)
     // as "r1,r2,r3,"
 	// ------------------------------------------------------------
 
-	// REMOVE below code and write your own Reply.
+	char reply_buff[255] = {0};
 	struct Reply reply;
-	reply.status = SUCCESS;
-	reply.num_member = 5;
-	reply.port = 1024;
+	read(sockfd, reply_buff, 255);
+	printf("process_command : Received reply - %s \n", reply_buff);
+
+	if (strcmp(command, "CREATE")) {
+		int reply_value = atoi(reply_buff);
+		if (reply_value > 0) {
+			reply.status = SUCCESS;
+			reply.num_member = 0;
+			reply.port = reply_value;
+		}
+	}
+
 	return reply;
 }
 
@@ -206,7 +227,7 @@ void process_chatmode(const char* host, const int port)
 	// to the server using host and port.
 	// You may re-use the function "connect_to".
 	// ------------------------------------------------------------
-
+	int room_fd = connect_to(host, port);
 	// ------------------------------------------------------------
 	// GUIDE 2:
 	// Once the client have been connected to the server, we need
