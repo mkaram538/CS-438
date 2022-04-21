@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package csce438;
+
+import "google/protobuf/timestamp.proto";
+
+// The messenger service definition.
+service COORDService{
+  rpc GetServer (ClientInfo) returns (ServerInfo) {}
+  rpc GetSlave (ClientInfo) returns (ServerInfo) {}
+  rpc GetFollowSyncer (ClientInfo) returns (SyncerInfo) {}
+  rpc BeginServer (ServerInfo) returns (ServerInfo) {}
+  rpc Pulse (ServerInfo) returns (None) {}
+}
+
+message ClientInfo {
+  string id = 1;
+}
+
+message SyncerInfo {
+  string port = 1;
+}
+
+message None {}
+
+message ServerInfo {
+  string port = 1;
+  string type = 2;
+  string id = 3;
+}
+
+

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package csce438;
+
+import "google/protobuf/timestamp.proto";
+
+// The messenger service definition.
+service SYNCService{
+  rpc NewClient (NewClientInfo) returns (Empty) {}
+  rpc NewFollower (FollowerInfo) returns (Empty) {}
+  rpc TimelineUpdate (TimelineInfo) returns (Empty) {}
+}
+
+message NewClientInfo {
+  string client_id = 1;
+}
+
+message FollowerInfo {
+  string follower_id = 1;
+  string followed_id = 2;
+}
+
+message Empty {}
+
+message TimelineInfo {
+  string follower_id = 1;
+  repeated string entries = 2;
+}
