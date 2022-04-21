@@ -1,0 +1,22 @@
+Scripts for Starting System (Ran in this order):
+
+Coordinator:
+  - ./coordinator -p 9090
+
+Slaves:
+	1. ./tsd -i 0.0.0.0 -c 9090 -p 9035 -d 1 -t slave
+	2. ./tsd -i 0.0.0.0 -c 9090 -p 9036 -d 2 -t slave
+	3. ./tsd -i 0.0.0.0 -c 9090 -p 9037 -d 3 -t slave
+
+Master:
+	1. ./tsd -i 0.0.0.0 -c 9090 -p 9045 -d 1 -t master
+	2. ./tsd -i 0.0.0.0 -c 9090 -p 9046 -d 2 -t master
+	3. ./tsd -i 0.0.0.0 -c 9090 -p 9047 -d 3 -t master
+
+Synchronizer:
+	1. ./synchronizer -i 0.0.0.0 -c 9090 -p 9055 -d 1
+	2. ./synchronizer -i 0.0.0.0 -c 9090 -p 9056 -d 2
+	3. ./synchronizer -i 0.0.0.0 -c 9090 -p 9057 -d 3
+
+Client:
+	- ./tsc -h 0.0.0.0 -u {id number (integer)} -p 9090
