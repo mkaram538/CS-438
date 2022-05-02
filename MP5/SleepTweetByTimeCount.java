@@ -13,39 +13,56 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class TweetByTimeCount {
+public class SleepTweetByTimeCount {
 
     public static class TokenizerMapper
             extends Mapper<Object, Text, Text, IntWritable>{
 
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
-        private Text timeStamp = new Text("T");
+        private Text hourText = new Text();
+        private Text timeLabel = new Text("T");
+        private Text textLabel = new Text("W");
+        private Text sleepWord = new Text("sleep");
 
         public void map(Object key, Text value, Context context
         ) throws IOException, InterruptedException {
             StringTokenizer itr = new StringTokenizer(value.toString());
 
-            // First checks if the line is empty
+            // First checks if line is empty
             if (itr.hasMoreTokens()) {
-                // Then checks if the line begins with "T" which is the label of the time line
+                // Then checks what the line begins with
                 word.set(itr.nextToken());
-                if (word.equals(timeStamp)) {
+                // If T, then it is a time line and the hour of the tweet is grabbed
+                if (word.equals(timeLabel)) {
                     // If it does continues through the rest of the line
                     while (itr.hasMoreTokens()) {
                         String time = itr.nextToken();
                         String test = time;
                         java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("HH:mm:ss");
-                        // Tries to parse the token as a time, if it can finds the hour substring then maps
-                        // the hour to a value of one
+                        // Tries to parse the token as a time, if it can, finds the hour substring then stores
+                        // the value in a Text variable so that if sleep is in the text it can be accessed
                         try{
                             format.parse(test);
                             String hour = time.substring(0, time.indexOf(":"));
-                            word.set(hour);
-                            context.write(word, one);
+                            hourText.set(hour);
                         }
                         catch(ParseException e) {
                         }
+                    }
+                // If W, then the line is checked for an instance of "sleep"
+                } else if (word.equals(textLabel)) {
+                    boolean contains = false;
+                    // Iterates through the tokens for the line to determine if "sleep" is present
+                    while (itr.hasMoreTokens()) {
+                        word.set(itr.nextToken());
+                        if (word.equals(sleepWord)) {
+                            contains = true;
+                        }
+                    }
+                    // If so, maps the hour of the tweet to the value of one
+                    if (contains) {
+                        context.write(hourText, one);
                     }
                 }
             }
@@ -71,8 +88,8 @@ public class TweetByTimeCount {
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "tweet count");
-        job.setJarByClass(TweetByTimeCount.class);
+        Job job = Job.getInstance(conf, "sleep tweet count");
+        job.setJarByClass(SleepTweetByTimeCount.class);
         job.setMapperClass(TokenizerMapper.class);
         job.setCombinerClass(IntSumReducer.class);
         job.setReducerClass(IntSumReducer.class);
